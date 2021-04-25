@@ -79,7 +79,7 @@ def week(update: Update, _: CallbackContext) -> None:
             match = covid_table.find(date=today_str)
             match.next()
             running_total = 0
-            for i in range(6):
+            for i in range(7):
                 running_total += return_daily_figure(today)
                 today = today - datetime.timedelta(days=1)
             update.message.reply_markdown(
