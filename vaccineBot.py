@@ -8,8 +8,7 @@ Basic Echobot example, repeats messages.
 Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
-import datetime
-import logging, dataset
+import logging, dataset, datetime, configparser
 from collections import OrderedDict
 from telegram import Update, ForceReply, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler, PicklePersistence
@@ -19,7 +18,17 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
 )
 
+
+config = configparser.ConfigParser()
+config.read('config.cfg')
+TELEGRAM_TOKEN = config['Credentials'].get('telegram_token')
+ADMIN_CONVERSATION_ID = config['Credentials'].get('admin_conversation_id')
+
+
 logger = logging.getLogger(__name__)
+logger.info("Starting bot.")
+logger.info ("Admin ID = " + str(ADMIN_CONVERSATION_ID))
+
 
 DB = dataset.connect("sqlite:///covid.db")
 covid_table = DB['covid']
@@ -35,19 +44,15 @@ def start(update: Update, _: CallbackContext) -> None:
     latest_day, previous_day = get_latest_stats_from_db()
     logger.info(latest_day['date'])
     _.bot_data.update({'date': str(latest_day['date'])})
-    
-    # update.message.reply_markdown_v2(
-    #    fr'Hi {user.mention_markdown_v2()}\!',
-    #    reply_markup=ForceReply(selective=True),
-    # )
     update.message.reply_markdown \
             (
             "*💉I'm the Irish Vaccine Data bot!💉* \n\n "
             "Try these commands\n\n"
+            "✅ /daily - Subscribe for daily updates.\n\n"
             "📅 /latest - Get the latest vaccination stats.\n\n"
             "🗓 /week - Get the stats for the last 7 days.\n\n"
-            "🗓 /daily - Subscribe for daily updates.\n\n"
-             "🗓 /unsubscribe - Unsubscribe from daily updates.\n\n"
+            "📈 /overall - Overall rollout statistics.\n\n"
+            "❎ /unsubscribe - Unsubscribe from daily updates.\n\n"
         )
 
     logger.info("/start")
@@ -113,48 +118,55 @@ def get_latest_stats_from_db():
     return (search_day_data, previous_day_data)
 
 
+def get_day_of_week_string(date_string):
+    
+    """ Get the day of the week based on the date string from the database """
+
+    # Split on / string, and feed to a datetime object, to use weekday function
+    date_strings = date_string.split("/")
+    update_date = datetime.datetime(int(date_strings[2]), int(date_strings[1]), int(date_strings[0]))
+    weekDays = ("Mon", "Tue", "Wed", "Thur", "Fri", "Sat", "Sun")
+    day_of_week = str(weekDays[update_date.weekday()])
+    return day_of_week
+
 def today(update: Update, _: CallbackContext) -> None:
+    
     """ Return the most recent vaccination numbers """
-    covid_table = DB['covid']
-    logging.info("Getting latest update")
-    #Start scanning back from todays date
-    search_day = datetime.datetime.now()
-    previous_day = search_day - datetime.timedelta(days=1)
-    while 1:
-        try:
-            search_day_string = str(search_day.day) + "/" + "{:02d}".format(search_day.month) + "/" + str(search_day.year)
-            logger.debug("Searching for %s", search_day_string)
-            search_day_match = covid_table.find(date=search_day_string)
-            search_day_data = search_day_match.next()
+    
+    logging.info("Getting latest update for " + str(update.message.chat_id))
+    
+    # Get latest day from db
+    today, previous_day = get_latest_stats_from_db()
+    
+    # Get latest update string
+    update_string = get_update_string(today, previous_day)
+   
+    # Send update
+    update.message.reply_markdown(update_string)
 
-            # If we get here, it means we found a match.
-            previous_day_string = str(previous_day.day) + "/" + "{:02d}".format(previous_day.month) + "/" + str(
-                previous_day.year)
-            previous_day_match = covid_table.find(date=previous_day_string)
-            previous_day_data = previous_day_match.next()
+    
+   
 
+def overall(update: Update, context: CallbackContext) -> None:
+    """ Returns stats on overall rollout """
 
-            logger.debug("Calculating previous day data")
-            pfizer = search_day_data['pfizer'] - previous_day_data['pfizer']
-            az = search_day_data['astraZeneca'] - previous_day_data['astraZeneca']
-            moderna = search_day_data['moderna'] - previous_day_data['moderna']
+    today, _ = get_latest_stats_from_db()
+    
+    logging.info("Getting overall stats for " + str(update.message.chat_id))
+    
+    text =  \
+    (
+                "*Overall stats as of " + today['date'] + "*\n\n"
+                + "Overall Total - " + str('{:,}'.format(today['totalVaccinations']))
+                + "\nPfizer - " + str('{:,}'.format(today['pfizer']))
+                + "\nAZ - " + str('{:,}'.format(today['astraZeneca']))
+                + "\nModerna - " + str('{:,}'.format(today['moderna'])) + "\n\n"
+                + "*% of adult (16+) pop. vaccinated*\n\n"
+                + "First dose - " + str('{0:.2%}'.format(today['firstDose']/3863147)) + "\n"
+                + "Second dose - " + str('{0:.2%}'.format(today['secondDose']/3863147))
+    )
 
-
-            update.message.reply_markdown\
-            (
-                "*" + search_day_string + "*\n"
-                + "\nDaily Total - " + str('{:,}'.format(search_day_data['dailyVaccinations']))
-                + "\n\nPfizer - " + str('{:,}'.format(pfizer))
-                + "\nAZ - " + str('{:,}'.format(az))
-                + "\nModerna - " + str('{:,}'.format(moderna))
-            )
-            logger.info("/latest")
-
-            break
-        except:
-            search_day = search_day - datetime.timedelta(days=1)
-            previous_day = search_day - datetime.timedelta(days=1)
-
+    update.message.reply_markdown(text)
 
 
 def unset_response(update: Update, context: CallbackContext) -> None:
@@ -169,7 +181,7 @@ def unset_response(update: Update, context: CallbackContext) -> None:
    
 
 def set_respond(update: Update, context: CallbackContext) -> None:
-    """ Schedule responses to this user """
+    """ Add this user to the list of subscribers """
     context.bot_data.update({str(update.message.chat_id) : 'True'})
     user_data = OrderedDict(user=str(update.message.chat_id),subscribed='True')
     users_table.upsert(user_data, ['user'])
@@ -193,28 +205,60 @@ def set_respond(update: Update, context: CallbackContext) -> None:
     except (IndexError, ValueError):
         update.message.reply_text('Usage: /daily')
 
+def users(update: Update, context: CallbackContext) -> None:
+    """ Allow admin to query subscribed users """
+    if str(update.message.chat_id) == str(ADMIN_CONVERSATION_ID):
+        logger.info("Admin queried users")
+        users_list = users_table.all()
+        for user in users_list:
+            update_string = "User - " + str(user['user']) + " Sub - " + str(user['subscribed'])
+            context.bot.send_message(ADMIN_CONVERSATION_ID, parse_mode='HTML', text=update_string)
+           
+def broadcast(update: Update, context: CallbackContext) -> None:
+    """ Allow admin to send out broadcasts to all subscribed users """
+    
+    if str(update.message.chat_id) == str(ADMIN_CONVERSATION_ID):
+        update_string = update.message.text[11:]
+        logger.info("Admin did a broadcast")
+        users_list = users_table.all()
+        for user in users_list:
+            if user['subscribed'] == "True":
+                context.bot.send_message(user['user'], parse_mode='HTML', text=update_string)
+                logger.info("Broadcasted message " + str(update_string) + " to user " + str(user['user']))
+                
+                
+def get_update_string(today, previous_day):   
+    """ Get the string for daily updates """
 
-def get_update_string(today, previous_day):
     pfizer = today['pfizer'] - previous_day['pfizer']
     az = today['astraZeneca'] - previous_day['astraZeneca']
     moderna = today['moderna'] - previous_day['moderna']
 
-    l1 = "*" + str(today['date']) + "*\n"
-    l2 = "\nDaily Total \- " + str('{:,}'.format(today['dailyVaccinations']))
-    l3 = "\n\nPfizer \- " + str('{:,}'.format(pfizer))
-    l4 = "\nAZ \- " + str('{:,}'.format(az))
-    l5 = "\nModerna \- " + str('{:,}'.format(moderna))
-    update_string = l1 + l2 + l3 + l4 + l5
+    day_of_week = get_day_of_week_string(today['date'])
 
+    l1 = "*" + day_of_week + " " + str(today['date']) + "*\n"
+    l2 = "\nDaily Total - " + str('{:,}'.format(today['dailyVaccinations']))
+    l3 = "\n\nPfizer - " + str('{:,}'.format(pfizer))
+    l4 = "\nAZ - " + str('{:,}'.format(az))
+    l5 = "\nModerna - " + str('{:,}'.format(moderna))
+    l6 = "\n"
+    l7 = "\nFirst dose - " + str('{0:.2%}'.format(today['firstDose']/3863147))
+    l8 = "\nSecond dose - " + str('{0:.2%}'.format(today['secondDose']/3863147))
+    
+    update_string = l1 + l2 + l3 + l4 + l5 + l6 + l7 + l8
     return update_string
 
 
 def schedule_response(context: CallbackContext) -> None:
-    """ Send the scheduled response """
-    logger.info(str(context.job.context))
+    """ Send an update to the subscribed users """
+
     today, previous_day = get_latest_stats_from_db()
     update_string = get_update_string(today, previous_day)
+    
+    # From DB get the date of our last update
     last_update = last_update_table.find_one(id=1)
+    
+    # Get the list of users
     users_list = users_table.all()
 
     if last_update['date'] == today['date']:
@@ -222,7 +266,8 @@ def schedule_response(context: CallbackContext) -> None:
         return None
 
     #If we get this far, dates were different, so let's send an update
-    logging.info("Dates were different, let's send an update")
+    logging.info("Dates were different, time for an update!")
+    
     for user in users_list:
         if user['subscribed'] == 'True':
             logging.info("Sending update to user - " + user['user'])
@@ -238,7 +283,7 @@ def main() -> None:
     # Create the Updater and pass it your bot's token.
     #updater = Updater("***REMOVED***")
     persistence = PicklePersistence(filename='conv_persistence')
-    updater = Updater("1771371812:AAGpSf2M5f4Gw25J2a77cSm8bChhg3so9EY", persistence=persistence, use_context=True)
+    updater = Updater(TELEGRAM_TOKEN, persistence=persistence, use_context=True)
 
     # Get the dispatcher to register handlers
     dispatcher = updater.dispatcher
@@ -250,6 +295,10 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("week", week))
     dispatcher.add_handler(CommandHandler("daily", set_respond))
     dispatcher.add_handler(CommandHandler("unsubscribe", unset_response))
+    dispatcher.add_handler(CommandHandler("overall", overall)),
+    dispatcher.add_handler(CommandHandler("broadcast", broadcast))
+    dispatcher.add_handler(CommandHandler("users", users))
+    
 
     # Start the Bot
     updater.start_polling()
