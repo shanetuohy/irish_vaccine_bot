@@ -8,9 +8,13 @@ The bot is running at https://t.me/irish_vaccine_bot
 ## Supported Commands
 
 /daily - Adds the users coversation id to a db table of conversations to update when there is a database update
+
 /week - Counts up the last 7 days of doses given
-/overall - Gives some overall stats about the rollouy
+
+/overall - Gives some overall stats about the rollout
+
 /latest - Queries the db for the most recent data
+
 /unsubscribe - Sets subscribed to false against the users coversation id
 
 
