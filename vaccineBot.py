@@ -1,12 +1,13 @@
 """
-Simple Bot to reply to Telegram messages.
-First, a few handler functions are defined. Then, those functions are passed to
-the Dispatcher and registered at their respective places.
-Then, the bot is started and runs until we press Ctrl-C on the command line.
-Usage:
-Basic Echobot example, repeats messages.
-Press Ctrl-C on the command line or send a signal to the process to stop the
-bot.
+Irish Vaccine Bot
+
+Bot queries an sqlite db called Covid.db every 200 seconds looking for updates
+
+If an update is found, sends an update to subscribed users. 
+
+Modify the config.cfg file to add configuration information. 
+
+updateDB.py should be runninng to periodically query the HSE APIs for figure updates. 
 """
 import logging, dataset, datetime, configparser
 from collections import OrderedDict
@@ -17,7 +18,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Callb
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
 )
-
+logging.getLogger('apscheduler').setLevel(logging.WARNING)
 
 config = configparser.ConfigParser()
 config.read('config.cfg')
@@ -116,7 +117,6 @@ def get_latest_stats_from_db():
             previous_day = search_day - datetime.timedelta(days=1)
     
     return (search_day_data, previous_day_data)
-
 
 def get_day_of_week_string(date_string):
     
@@ -267,12 +267,12 @@ def schedule_response(context: CallbackContext) -> None:
 
     #If we get this far, dates were different, so let's send an update
     logging.info("Dates were different, time for an update!")
-    
+    user_counter = 0
     for user in users_list:
         if user['subscribed'] == 'True':
-            logging.info("Sending update to user - " + user['user'])
-            context.bot.send_message(user['user'], parse_mode='MarkdownV2', text=update_string)
-    
+            user_counter += 1
+            context.bot.send_message(user['user'], parse_mode='Markdown', text=update_string)
+    logging.info("Sent update to " + str(user_counter) + " users")
     #Update the last updated date in the db
     last_update_data = OrderedDict(id=1,date=today['date'])
     last_update_table.upsert(last_update_data, ['id'])
