@@ -1,9 +1,0 @@
-** Irish Vaccine Telegram Bot ** 
-
-Contains two different python scripts. 
-
-One periodically queries the Irish Vaccine API, to pull down the latest stats and saves them in an sqlite DB called covid.db. 
-
-The other sets up a Telegram bot, which provides a number of commands, including /daily, which subscribes the user to daily updates. 
-
-The bot checks the database for updates, and updates people that have subscribed.
