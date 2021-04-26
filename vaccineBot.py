@@ -281,7 +281,7 @@ def schedule_response(context: CallbackContext) -> None:
 def main() -> None:
     """Start the bot."""
     # Create the Updater and pass it your bot's token.
-    #updater = Updater("***REMOVED***")
+    #updater = Updater("1653123514:AAGFi2oLMPIky2BcsuCTQGbQS5vhCY6nFsQ")
     persistence = PicklePersistence(filename='conv_persistence')
     updater = Updater(TELEGRAM_TOKEN, persistence=persistence, use_context=True)
 
