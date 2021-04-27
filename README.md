@@ -25,7 +25,7 @@ A live version of this bot is running at https://t.me/irish_vaccine_bot, try it 
 
 ## Updates
 
-The bot queries a local SQLite database every ~3 minutes to see has the date changed since the last time the bot updated everyone. 
+The bot queries a local SQLite database every ~3 minutes to see has the date of the most recent data changed since the last time the bot updated everyone. 
 
 The bot doesn't query the APIs itself. The 'updateDB.py' script does this. 
 
