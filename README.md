@@ -1,5 +1,8 @@
 # Irish Vaccine Telegram Bot
 
+![vaccine](https://user-images.githubusercontent.com/3654645/116251444-913b0880-a766-11eb-8219-60208f3589b9.jpg)
+
+
 This is the source code for a telegram bot which periodically updates the user about Irish vaccine data. 
 
 A live version of this bot is running at https://t.me/irish_vaccine_bot, try it out. 
