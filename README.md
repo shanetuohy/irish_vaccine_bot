@@ -42,11 +42,11 @@ The Telegram botfather bot can be used to get a bot token. Once you have this, p
 
 You will also need to know your conversation id, so that you can interact with the bot as the admin. To get this, use the "GetIDs Bot". Use the string of numbers that it returns. Add this to the config.cfg file too. 
 
-### Set up the database
+### Step 3 - Set up the database
 
 Rename the sample database file (sample_database.db) to covid.db. 
 
-### Install the requirements into a virtual environment
+### Step 4 - Install the requirements into a virtual environment
 
 Create a venv for the bot and enable the virtual environment.  
 ```bash
@@ -60,7 +60,7 @@ Now install the requirements from the requirements.txt folder
 pip install -r requirements.txt
 ```
 
-### Run the updateDB.py script
+### Step 5 - Run the updateDB.py script
 
 The APIs do not provide historical data for the vaccine rollout unfortunately, so the database needs to be manually kept up to date with the updateDB.py script. This script will periodically query the APIs and when there is an update, it will add the latest days stats to the database so the bot can access the data.
 
@@ -70,7 +70,7 @@ Whem you run the script for the first time, you should see it add the latest day
 > python updateDB.py
 ```
 
-### Start the bot
+### Step 6 - Start the bot
 
 Now that your database is set up and the corrent tokens are configured, you can start the bot. It will immediately be ready to respond to your commands. 
 
