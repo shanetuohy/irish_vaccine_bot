@@ -56,7 +56,7 @@ def start(update: Update, _: CallbackContext) -> None:
             "❎ /unsubscribe - Unsubscribe from daily updates.\n\n"
         )
 
-    logger.info("/start")
+    logging.info("Start by " + str(update.message.chat_id))
 
 
 def help_command(update: Update, _: CallbackContext) -> None:
@@ -69,9 +69,8 @@ def return_daily_figure(date_object):
     result = match.next()
     return result['dailyVaccinations']
 
-
-def week(update: Update, _: CallbackContext) -> None:
-    """Send a message when the command /week is issued."""
+def return_weekly_figure():
+    """ Get the previous 7 days doses """
     today = datetime.datetime.now()
 
     while 1:
@@ -83,14 +82,20 @@ def week(update: Update, _: CallbackContext) -> None:
             for i in range(7):
                 running_total += return_daily_figure(today)
                 today = today - datetime.timedelta(days=1)
-            update.message.reply_markdown(
-                "*Total doses in last 7 days*\n\n"
-                + str('{:,}'.format(running_total)))
-            logger.info("/week")
-
-            break
+                average_dose_per_day = round(running_total/7)
+            return running_total, average_dose_per_day           
         except:
             today = today - datetime.timedelta(days=1)
+
+def week(update: Update, _: CallbackContext) -> None:
+    """Send a message when the command /week is issued."""
+    running_total, average_dose_per_day = return_weekly_figure()
+    update.message.reply_markdown(
+                "*Total doses in last 7 days*\n"
+                + str('{:,}'.format(running_total)) + "\n"
+                + "*Average daily doses (7 day)*" + "\n"
+                + str('{:,}'.format(average_dose_per_day)))
+    logging.info("Getting week update for " + str(update.message.chat_id))
 
 
 def get_latest_stats_from_db():
@@ -151,6 +156,7 @@ def overall(update: Update, context: CallbackContext) -> None:
     """ Returns stats on overall rollout """
 
     today, _ = get_latest_stats_from_db()
+    seven_day, rolling_avg = return_weekly_figure()
     
     logging.info("Getting overall stats for " + str(update.message.chat_id))
     
@@ -159,11 +165,14 @@ def overall(update: Update, context: CallbackContext) -> None:
                 "*Overall stats as of " + today['date'] + "*\n\n"
                 + "Overall Total - " + str('{:,}'.format(today['totalVaccinations']))
                 + "\nPfizer - " + str('{:,}'.format(today['pfizer']))
-                + "\nAZ - " + str('{:,}'.format(today['astraZeneca']))
+                + "\nAstraZeneca - " + str('{:,}'.format(today['astraZeneca']))
                 + "\nModerna - " + str('{:,}'.format(today['moderna'])) + "\n\n"
                 + "*% of adult (16+) pop. vaccinated*\n\n"
                 + "First dose - " + str('{0:.2%}'.format(today['firstDose']/3863147)) + "\n"
-                + "Second dose - " + str('{0:.2%}'.format(today['secondDose']/3863147))
+                + "Second dose - " + str('{0:.2%}'.format(today['secondDose']/3863147)) + "\n"
+                + "\n*Last 7 days*\n" 
+                + "\nRolling average - " + str('{:,}'.format(seven_day))
+                + "\nDoses per day (7 day) - " + str('{:,}'.format(rolling_avg))
     )
 
     update.message.reply_markdown(text)
@@ -178,6 +187,10 @@ def unset_response(update: Update, context: CallbackContext) -> None:
     text = "No worries, you've been unsubscribed.\n\n" \
             "To subscribe to daily updates again, just press /daily"
     update.message.reply_text(text)
+
+    update_string = "User " + str(update.message.chat_id) + " unsubscribed"
+    # Alert admin that user unsubscribed. 
+    context.bot.send_message(ADMIN_CONVERSATION_ID, parse_mode='HTML', text=update_string)
    
 
 def set_respond(update: Update, context: CallbackContext) -> None:
@@ -196,11 +209,13 @@ def set_respond(update: Update, context: CallbackContext) -> None:
         #    logging.info("Got no jobs from the list, continue")
 
         # Recreate the job. 
-        context.job_queue.run_repeating(schedule_response, 200, context="Daily")
+        context.job_queue.run_repeating(schedule_response, 1200, context="Daily")
         text = "I'll message you every day, as soon as the vaccine stats update.\n\n" \
                 "To unsubscribe, just press /unsubscribe. \n\n" \
                 "To see the latest stats, press /latest."
         update.message.reply_text(text)
+        update_string = "User " + str(update.message.chat_id) + " subscribed"
+        context.bot.send_message(ADMIN_CONVERSATION_ID, parse_mode='HTML', text=update_string)
 
     except (IndexError, ValueError):
         update.message.reply_text('Usage: /daily')
@@ -210,10 +225,12 @@ def users(update: Update, context: CallbackContext) -> None:
     if str(update.message.chat_id) == str(ADMIN_CONVERSATION_ID):
         logger.info("Admin queried users")
         users_list = users_table.all()
+        update_string = ""
         for user in users_list:
-            update_string = "User - " + str(user['user']) + " Sub - " + str(user['subscribed'])
-            context.bot.send_message(ADMIN_CONVERSATION_ID, parse_mode='HTML', text=update_string)
+            update_string += "\nUser - " + str(user['user']) + " Sub - " + str(user['subscribed'])
+        context.bot.send_message(ADMIN_CONVERSATION_ID, parse_mode='HTML', text=update_string)
            
+            
 def broadcast(update: Update, context: CallbackContext) -> None:
     """ Allow admin to send out broadcasts to all subscribed users """
     
@@ -233,25 +250,34 @@ def get_update_string(today, previous_day):
     pfizer = today['pfizer'] - previous_day['pfizer']
     az = today['astraZeneca'] - previous_day['astraZeneca']
     moderna = today['moderna'] - previous_day['moderna']
-
+    seven_day, rolling_avg = return_weekly_figure()
     day_of_week = get_day_of_week_string(today['date'])
 
     l1 = "*" + day_of_week + " " + str(today['date']) + "*\n"
     l2 = "\nDaily Total - " + str('{:,}'.format(today['dailyVaccinations']))
     l3 = "\n\nPfizer - " + str('{:,}'.format(pfizer))
-    l4 = "\nAZ - " + str('{:,}'.format(az))
+    l4 = "\nAstraZeneca - " + str('{:,}'.format(az))
     l5 = "\nModerna - " + str('{:,}'.format(moderna))
     l6 = "\n"
     l7 = "\nFirst dose - " + str('{0:.2%}'.format(today['firstDose']/3863147))
     l8 = "\nSecond dose - " + str('{0:.2%}'.format(today['secondDose']/3863147))
-    
-    update_string = l1 + l2 + l3 + l4 + l5 + l6 + l7 + l8
+    l9 = "\n"
+    l10 = "\nRolling 7 day total - " + str('{:,}'.format(seven_day))
+    l11 = "\nAverage daily doses (7 days) - " + str('{:,}'.format(rolling_avg))
+    l12 = "\n\nTo subscribe for daily updates, press /daily"
+    l13 = "\nTo unsubscribe, press /unsubscribe."
+    l14 = "\nTo see all available commands press /start"
+    update_string = l1 + l2 + l3 + l4 + l5 + l6 + l7 + l8 + l9 + l10 + l11 + l12 + l13 + l14
     return update_string
+
+def log_text(update: Update, _: CallbackContext) -> None:
+    """Echo the user message."""
+    logger.info("Didn't match - " + str(update.message.text))
 
 
 def schedule_response(context: CallbackContext) -> None:
     """ Send an update to the subscribed users """
-
+    logging.info(".")
     today, previous_day = get_latest_stats_from_db()
     update_string = get_update_string(today, previous_day)
     
@@ -267,15 +293,19 @@ def schedule_response(context: CallbackContext) -> None:
 
     #If we get this far, dates were different, so let's send an update
     logging.info("Dates were different, time for an update!")
+
+    #Update the last updated date in the db
+    last_update_data = OrderedDict(id=1,date=today['date'])
+    last_update_table.upsert(last_update_data, ['id'])
+    
+    #Send updates to users
     user_counter = 0
     for user in users_list:
         if user['subscribed'] == 'True':
             user_counter += 1
             context.bot.send_message(user['user'], parse_mode='Markdown', text=update_string)
     logging.info("Sent update to " + str(user_counter) + " users")
-    #Update the last updated date in the db
-    last_update_data = OrderedDict(id=1,date=today['date'])
-    last_update_table.upsert(last_update_data, ['id'])
+    
 
 
 def main() -> None:
@@ -299,7 +329,7 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("broadcast", broadcast))
     dispatcher.add_handler(CommandHandler("users", users))
     
-
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, log_text))
     # Start the Bot
     updater.start_polling()
 
