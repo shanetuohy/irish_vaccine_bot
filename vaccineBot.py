@@ -240,9 +240,13 @@ def broadcast(update: Update, context: CallbackContext) -> None:
         users_list = users_table.all()
         for user in users_list:
             if user['subscribed'] == "True":
-                context.bot.send_message(user['user'], parse_mode='HTML', text=update_string)
-                logger.info("Broadcasted message " + str(update_string) + " to user " + str(user['user']))
-                
+                try:
+                    context.bot.send_message(user['user'], parse_mode='HTML', text=update_string)
+                    logger.info("Broadcasted message " + str(update_string) + " to user " + str(user['user']))
+                except:
+                    e = sys.exc_info()[0]
+                    logger.info(str(e))
+                    logger.info("Got an exception sending message to " + str(user['user'))
                 
 def get_update_string(today, previous_day):   
     """ Get the string for daily updates """
@@ -302,8 +306,13 @@ def schedule_response(context: CallbackContext) -> None:
     user_counter = 0
     for user in users_list:
         if user['subscribed'] == 'True':
-            user_counter += 1
+        try:
             context.bot.send_message(user['user'], parse_mode='Markdown', text=update_string)
+            user_counter += 1
+        except:
+            e = sys.exc_info()[0]
+            logger.info(str(e))
+            logger.info("Got exception when sending update to " + user['user']
     logging.info("Sent update to " + str(user_counter) + " users")
     
 
