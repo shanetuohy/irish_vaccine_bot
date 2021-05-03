@@ -274,9 +274,11 @@ def get_update_string(today, previous_day):
     update_string = l1 + l2 + l3 + l4 + l5 + l6 + l7 + l8 + l9 + l10 + l11 + l12 + l13 + l14
     return update_string
 
-def log_text(update: Update, _: CallbackContext) -> None:
+def log_text(update: Update, context: CallbackContext) -> None:
     """Echo the user message."""
     logger.info("Didn't match - " + str(update.message.text))
+    context.bot.send_message(ADMIN_CONVERSATION_ID, parse_mode='HTML', text="Got a non matched message from " + str(update.message.chat_id))
+    context.bot.send_message(ADMIN_CONVERSATION_ID, parse_mode='HTML', text=str(update.message.text))
 
 
 def schedule_response(context: CallbackContext) -> None:
