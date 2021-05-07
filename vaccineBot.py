@@ -209,11 +209,14 @@ def set_respond(update: Update, context: CallbackContext) -> None:
         #    logging.info("Got no jobs from the list, continue")
 
         # Recreate the job. 
-        context.job_queue.run_repeating(schedule_response, 1200, context="Daily")
+        context.job_queue.run_repeating(schedule_response, 200, context="Daily")
+        logging.info("Created updated job.")
         text = "I'll message you every day, as soon as the vaccine stats update.\n\n" \
                 "To unsubscribe, just press /unsubscribe. \n\n" \
                 "To see the latest stats, press /latest."
         update.message.reply_text(text)
+
+        # Alert Admin that someone has subscribed
         update_string = "User " + str(update.message.chat_id) + " subscribed"
         context.bot.send_message(ADMIN_CONVERSATION_ID, parse_mode='HTML', text=update_string)
 
@@ -257,22 +260,29 @@ def get_update_string(today, previous_day):
     seven_day, rolling_avg = return_weekly_figure()
     day_of_week = get_day_of_week_string(today['date'])
 
-    l1 = "*" + day_of_week + " " + str(today['date']) + "*\n"
-    l2 = "\nDaily Total - " + str('{:,}'.format(today['dailyVaccinations']))
-    l3 = "\n\nPfizer - " + str('{:,}'.format(pfizer))
-    l4 = "\nAstraZeneca - " + str('{:,}'.format(az))
-    l5 = "\nModerna - " + str('{:,}'.format(moderna))
-    l6 = "\n"
-    l7 = "\nFirst dose - " + str('{0:.2%}'.format(today['firstDose']/3863147))
-    l8 = "\nSecond dose - " + str('{0:.2%}'.format(today['secondDose']/3863147))
-    l9 = "\n"
-    l10 = "\nRolling 7 day total - " + str('{:,}'.format(seven_day))
-    l11 = "\nAverage daily doses (7 days) - " + str('{:,}'.format(rolling_avg))
-    l12 = "\n\nTo subscribe for daily updates, press /daily"
-    l13 = "\nTo unsubscribe, press /unsubscribe."
-    l14 = "\nTo see all available commands press /start"
+    l1 = "<u><b>" + day_of_week + " " + str(today['date']) + "</b></u>\n"
+    l2 = "\n📈 Daily Total - " + str('{:,}'.format(today['dailyVaccinations']))
+    l3 = "\n\n\t\t\t🅿️ Pfizer - " + str('{:,}'.format(pfizer))
+    l4 = "\n\t\t\t🅰️ AstraZeneca - " + str('{:,}'.format(az))
+    l5 = "\n\t\t\tⓂ️ Moderna - " + str('{:,}'.format(moderna))
+    l6 = "\n\n<b>🧑 16+ population vaccinated</b>\n"
+    l7 = "\n\t\t\t1️⃣ First dose - " + str('{0:.2%}'.format(today['firstDose']/3909809))
+    l8 = "\n\t\t\t2️⃣ Second dose - " + str('{0:.2%}'.format(today['secondDose']/3909809))
+    l9 = "\n\n<b>📅 Rolling 7 Day Stats</b>"
+    l10 = "\n\n\t\t\tRolling 7 Day Doses - " + str('{:,}'.format(seven_day))
+    l11 = "\n\t\t\tAverage Daily Doses - " + str('{:,}'.format(rolling_avg))
+    l12 = "\n\n<b>👇 Commands</b>\n\n\t\t\t/daily - Subscribe for daily updates"
+    l13 = "\n\t\t\t/unsubscribe - Unsubscribe from updates"
+    l14 = "\n\t\t\t/start - See all commands"
     update_string = l1 + l2 + l3 + l4 + l5 + l6 + l7 + l8 + l9 + l10 + l11 + l12 + l13 + l14
     return update_string
+
+
+def test_update(update: Update, context: CallbackContext) -> None:
+    today, previous_day = get_latest_stats_from_db()
+    update_string = get_update_string(today, previous_day)
+    context.bot.send_message(ADMIN_CONVERSATION_ID, parse_mode='HTML', text=update_string)
+    
 
 def log_text(update: Update, context: CallbackContext) -> None:
     """Echo the user message."""
@@ -283,7 +293,7 @@ def log_text(update: Update, context: CallbackContext) -> None:
 
 def schedule_response(context: CallbackContext) -> None:
     """ Send an update to the subscribed users """
-    logging.info(".")
+    
     today, previous_day = get_latest_stats_from_db()
     update_string = get_update_string(today, previous_day)
     
@@ -339,7 +349,9 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("overall", overall)),
     dispatcher.add_handler(CommandHandler("broadcast", broadcast))
     dispatcher.add_handler(CommandHandler("users", users))
-    
+    dispatcher.add_handler(CommandHandler("test_update", test_update))
+
+
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, log_text))
     # Start the Bot
     updater.start_polling()
