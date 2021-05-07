@@ -147,7 +147,7 @@ def today(update: Update, _: CallbackContext) -> None:
     update_string = get_update_string(today, previous_day)
    
     # Send update
-    update.message.reply_markdown(update_string)
+    update.message.reply_html(update_string)
 
     
    
