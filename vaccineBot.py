@@ -149,34 +149,6 @@ def today(update: Update, _: CallbackContext) -> None:
     # Send update
     update.message.reply_html(update_string)
 
-    
-   
-
-def overall(update: Update, context: CallbackContext) -> None:
-    """ Returns stats on overall rollout """
-
-    today, _ = get_latest_stats_from_db()
-    seven_day, rolling_avg = return_weekly_figure()
-    
-    logging.info("Getting overall stats for " + str(update.message.chat_id))
-    
-    text =  \
-    (
-                "*Overall stats as of " + today['date'] + "*\n\n"
-                + "Overall Total - " + str('{:,}'.format(today['totalVaccinations']))
-                + "\nPfizer - " + str('{:,}'.format(today['pfizer']))
-                + "\nAstraZeneca - " + str('{:,}'.format(today['astraZeneca']))
-                + "\nModerna - " + str('{:,}'.format(today['moderna'])) + "\n\n"
-                + "*% of adult (16+) pop. vaccinated*\n\n"
-                + "First dose - " + str('{0:.2%}'.format(today['firstDose']/3863147)) + "\n"
-                + "Second dose - " + str('{0:.2%}'.format(today['secondDose']/3863147)) + "\n"
-                + "\n*Last 7 days*\n" 
-                + "\nRolling average - " + str('{:,}'.format(seven_day))
-                + "\nDoses per day (7 day) - " + str('{:,}'.format(rolling_avg))
-    )
-
-    update.message.reply_markdown(text)
-
 
 def unset_response(update: Update, context: CallbackContext) -> None:
     """ Set users update to False """
@@ -260,7 +232,7 @@ def get_update_string(today, previous_day):
     seven_day, rolling_avg = return_weekly_figure()
     day_of_week = get_day_of_week_string(today['date'])
 
-    l1 = "<u><b>" + day_of_week + " " + str(today['date']) + "</b></u>\n"
+    l1 = "<b>📊" + day_of_week + " " + str(today['date']) + "</b>\n"
     l2 = "\n📈 Daily Total - " + str('{:,}'.format(today['dailyVaccinations']))
     l3 = "\n\n\t\t\t🅿️ Pfizer - " + str('{:,}'.format(pfizer))
     l4 = "\n\t\t\t🅰️ AstraZeneca - " + str('{:,}'.format(az))
@@ -269,13 +241,43 @@ def get_update_string(today, previous_day):
     l7 = "\n\t\t\t1️⃣ First dose - " + str('{0:.2%}'.format(today['firstDose']/3909809))
     l8 = "\n\t\t\t2️⃣ Second dose - " + str('{0:.2%}'.format(today['secondDose']/3909809))
     l9 = "\n\n<b>📅 Rolling 7 Day Stats</b>"
-    l10 = "\n\n\t\t\tRolling 7 Day Doses - " + str('{:,}'.format(seven_day))
-    l11 = "\n\t\t\tAverage Daily Doses - " + str('{:,}'.format(rolling_avg))
+    l10 = "\n\n\t\t\t📈 Rolling 7 Day Doses - " + str('{:,}'.format(seven_day))
+    l11 = "\n\t\t\t💉 Average Daily Doses - " + str('{:,}'.format(rolling_avg))
     l12 = "\n\n<b>👇 Commands</b>\n\n\t\t\t/daily - Subscribe for daily updates"
     l13 = "\n\t\t\t/unsubscribe - Unsubscribe from updates"
     l14 = "\n\t\t\t/start - See all commands"
     update_string = l1 + l2 + l3 + l4 + l5 + l6 + l7 + l8 + l9 + l10 + l11 + l12 + l13 + l14
     return update_string
+
+
+def overall(update: Update, context: CallbackContext) -> None:
+    """ Returns stats on overall rollout """
+
+    today, _ = get_latest_stats_from_db()
+    seven_day, rolling_avg = return_weekly_figure()
+    
+    logging.info("Getting overall stats for " + str(update.message.chat_id))
+    
+    text =  \
+    (
+                "📊*Overall stats as of " + today['date'] + "*\n\n"
+                + "\t\t\t🔢 Overall Total - " + str('{:,}'.format(today['totalVaccinations']))
+                + "\n\n\t\t\t🅿️ Pfizer - " + str('{:,}'.format(today['pfizer']))
+                + "\n\t\t\t🅰️ AstraZeneca - " + str('{:,}'.format(today['astraZeneca']))
+                + "\n\t\t\tⓂ️ Moderna - " + str('{:,}'.format(today['moderna'])) + "\n\n"
+                + "*🧑 16+ population vaccinated*\n\n"
+                + "\t\t\t1️⃣ First dose - " + str('{0:.2%}'.format(today['firstDose']/3909809)) + "\n"
+                + "\t\t\t2️⃣ Second dose - " + str('{0:.2%}'.format(today['secondDose']/3909809)) + "\n"
+                + "\n📅 *Rolling 7 Day Stats*\n" 
+                + "\n\t\t\t📈 Rolling 7 Day Doses - " + str('{:,}'.format(seven_day))
+                + "\n\t\t\t💉 Average Daily Doses - " + str('{:,}'.format(rolling_avg))
+                + "\n\n👇* Commands *"
+                + "\n\n\t\t\t/daily - Subscribe for daily updates"
+                + "\n\t\t\t/unsubscribe - Unsubscribe from updates"
+                + "\n\t\t\t/start - See all commands"
+    )
+
+    update.message.reply_markdown(text)
 
 
 def test_update(update: Update, context: CallbackContext) -> None:
