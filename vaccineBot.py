@@ -41,7 +41,6 @@ last_update_table = DB['last_update']
 # context.
 def start(update: Update, _: CallbackContext) -> None:
     """Send a message when the command /start is issued."""
-    user = update.effective_user
     latest_day, previous_day = get_latest_stats_from_db()
     logger.info(latest_day['date'])
     _.bot_data.update({'date': str(latest_day['date'])})
@@ -86,17 +85,6 @@ def return_weekly_figure():
             return running_total, average_dose_per_day           
         except:
             today = today - datetime.timedelta(days=1)
-
-def week(update: Update, _: CallbackContext) -> None:
-    """Send a message when the command /week is issued."""
-    running_total, average_dose_per_day = return_weekly_figure()
-    update.message.reply_markdown(
-                "*Total doses in last 7 days*\n"
-                + str('{:,}'.format(running_total)) + "\n"
-                + "*Average daily doses (7 day)*" + "\n"
-                + str('{:,}'.format(average_dose_per_day)))
-    logging.info("Getting week update for " + str(update.message.chat_id))
-
 
 def get_latest_stats_from_db():
 
@@ -222,7 +210,20 @@ def broadcast(update: Update, context: CallbackContext) -> None:
                     e = sys.exc_info()[0]
                     logger.info(str(e))
                     logger.info("Got an exception sending message to " + str(user['user']))
-                
+
+
+def week(update: Update, _: CallbackContext) -> None:
+    """Send a message when the command /week is issued."""
+    running_total, average_dose_per_day = return_weekly_figure()
+    text = \
+        (
+            "\n📅 *Rolling 7 Day Stats*\n" 
+            + "\n\t\t\t📈 Rolling 7 Day Doses - " + str('{:,}'.format(running_total))
+            + "\n\t\t\t💉 Average Daily Doses - " + str('{:,}'.format(average_dose_per_day))    
+        )
+    update.message.reply_markdown(text)
+    logging.info("Getting week update for " + str(update.message.chat_id))
+
 def get_update_string(today, previous_day):   
     """ Get the string for daily updates """
 
@@ -248,7 +249,8 @@ def get_update_string(today, previous_day):
     l12 = "\n\n<b>👇 Commands</b>\n\n\t\t\t/daily - Subscribe for daily updates"
     l13 = "\n\t\t\t/unsubscribe - Unsubscribe from updates"
     l14 = "\n\t\t\t/start - See all commands"
-    update_string = l1 + l2 + l3 + l4 + l5 + jj + l6 + l7 + l8 + l9 + l10 + l11 + l12 + l13 + l14
+    l15 = "\n\nNote that first dose percentages also currently include the small number of J&J single dose vaccines delivered"
+    update_string = l1 + l2 + l3 + l4 + l5 + jj + l6 + l7 + l8 + l9 + l10 + l11 + l12 + l13 + l14 + l15
     return update_string
 
 
@@ -278,6 +280,7 @@ def overall(update: Update, context: CallbackContext) -> None:
                 + "\n\n\t\t\t/daily - Subscribe for daily updates"
                 + "\n\t\t\t/unsubscribe - Unsubscribe from updates"
                 + "\n\t\t\t/start - See all commands"
+                + "\n\nNote that first dose percentages also currently include the small number of J&J single dose vaccines delivered"
     )
 
     update.message.reply_markdown(text)
