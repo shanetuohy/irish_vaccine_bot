@@ -43,7 +43,7 @@ def check_rest_api():
     az_today = today['az'] - covid_table.find(date=previous_day_str).next()['astraZeneca']
     
     johnson_today =  (today['totalAdministered'] - total_vac_yesterday) - (pfizer_today + moderna_today + az_today) 
-
+    johnson_total = johnson_today + covid_table.find(date=previous_day_str).next()['jj']
     today_dict = OrderedDict(date=returned_date_str,
                              firstDose=today['firstDose'],
                              secondDose=today['secondDose'],
@@ -52,7 +52,7 @@ def check_rest_api():
                              moderna=today['modern'],
                              astraZeneca=today['az'],
                              dailyVaccinations=today['totalAdministered'] - total_vac_yesterday,
-                             jj=johnson_today
+                             jj=johnson_total
                              )
 
     try:
