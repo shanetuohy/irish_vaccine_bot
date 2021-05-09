@@ -38,6 +38,11 @@ def check_rest_api():
     previous_day_str = str(previous_day.day) + "/" + "{:02d}".format(previous_day.month) + "/" + str(previous_day.year)
 
     total_vac_yesterday = covid_table.find(date=previous_day_str).next()['totalVaccinations']
+    pfizer_today = today['pf'] - covid_table.find(date=previous_day_str).next()['pfizer'] 
+    moderna_today = today['modern'] - covid_table.find(date=previous_day_str).next()['moderna'] 
+    az_today = today['az'] - covid_table.find(date=previous_day_str).next()['astraZeneca']
+    
+    johnson_today =  (today['totalAdministered'] - total_vac_yesterday) - (pfizer_today + moderna_today + az_today) 
 
     today_dict = OrderedDict(date=returned_date_str,
                              firstDose=today['firstDose'],
@@ -46,19 +51,23 @@ def check_rest_api():
                              pfizer=today['pf'],
                              moderna=today['modern'],
                              astraZeneca=today['az'],
-                             dailyVaccinations=today['totalAdministered'] - total_vac_yesterday
+                             dailyVaccinations=today['totalAdministered'] - total_vac_yesterday,
+                             jj=johnson_today
                              )
 
     try:
         match = covid_table.find(date=returned_date_str)
         todays = match.next()
         if todays == today_dict:
-            print(returned_date_str_short + " exists in the DB. No update needed")
-            return 30
+            return 10
+        else:
+            print("Didn't get the same object, so let's insert a new entry")
+            covid_table.insert(today_dict)
+            return 10
     except StopIteration as e:
         print("Returned date " + returned_date_str_short + " did not exist in DB. Adding.")
         covid_table.insert(today_dict)
-        return 1200
+        return 60
 
 while 1:
     now = datetime.datetime.now()
