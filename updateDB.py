@@ -66,14 +66,14 @@ def check_rest_api():
             return 10
     except StopIteration as e:
         print("Returned date " + returned_date_str_short + " did not exist in DB. Adding.")
+        print("Sleeping for 60")
         covid_table.insert(today_dict)
         return 60
 
 while 1:
     now = datetime.datetime.now()
-    print("Checking API for updates at " + str(now.hour) + ":" + str(now.minute))
     minutes_to_sleep = check_rest_api()
     dt = datetime.datetime.now() + datetime.timedelta(minutes = minutes_to_sleep)
-    print("Going to sleep for " + str(minutes_to_sleep) + " minutes")
+    print(".", end="")
     while datetime.datetime.now() < dt:
         time.sleep(1)
