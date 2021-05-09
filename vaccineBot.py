@@ -229,6 +229,7 @@ def get_update_string(today, previous_day):
     pfizer = today['pfizer'] - previous_day['pfizer']
     az = today['astraZeneca'] - previous_day['astraZeneca']
     moderna = today['moderna'] - previous_day['moderna']
+    johnson = today['jj'] - previous_day['jj']
     seven_day, rolling_avg = return_weekly_figure()
     day_of_week = get_day_of_week_string(today['date'])
 
@@ -237,6 +238,7 @@ def get_update_string(today, previous_day):
     l3 = "\n\n\t\t\t🅿️ Pfizer - " + str('{:,}'.format(pfizer))
     l4 = "\n\t\t\t🅰️ AstraZeneca - " + str('{:,}'.format(az))
     l5 = "\n\t\t\tⓂ️ Moderna - " + str('{:,}'.format(moderna))
+    jj = "\n\t\t\t🇯 J&J - " + str('{:,}'.format(johnson))
     l6 = "\n\n<b>🧑 16+ population vaccinated</b>\n"
     l7 = "\n\t\t\t1️⃣ First dose - " + str('{0:.2%}'.format(today['firstDose']/3909809))
     l8 = "\n\t\t\t2️⃣ Second dose - " + str('{0:.2%}'.format(today['secondDose']/3909809))
@@ -246,7 +248,7 @@ def get_update_string(today, previous_day):
     l12 = "\n\n<b>👇 Commands</b>\n\n\t\t\t/daily - Subscribe for daily updates"
     l13 = "\n\t\t\t/unsubscribe - Unsubscribe from updates"
     l14 = "\n\t\t\t/start - See all commands"
-    update_string = l1 + l2 + l3 + l4 + l5 + l6 + l7 + l8 + l9 + l10 + l11 + l12 + l13 + l14
+    update_string = l1 + l2 + l3 + l4 + l5 + jj + l6 + l7 + l8 + l9 + l10 + l11 + l12 + l13 + l14
     return update_string
 
 
@@ -264,7 +266,8 @@ def overall(update: Update, context: CallbackContext) -> None:
                 + "\t\t\t🔢 Overall Total - " + str('{:,}'.format(today['totalVaccinations']))
                 + "\n\n\t\t\t🅿️ Pfizer - " + str('{:,}'.format(today['pfizer']))
                 + "\n\t\t\t🅰️ AstraZeneca - " + str('{:,}'.format(today['astraZeneca']))
-                + "\n\t\t\tⓂ️ Moderna - " + str('{:,}'.format(today['moderna'])) + "\n\n"
+                + "\n\t\t\tⓂ️ Moderna - " + str('{:,}'.format(today['moderna']))
+                + "\n\t\t\t🇯 J&J - " + str('{:,}'.format(today['jj'])) + "\n\n"
                 + "*🧑 16+ population vaccinated*\n\n"
                 + "\t\t\t1️⃣ First dose - " + str('{0:.2%}'.format(today['firstDose']/3909809)) + "\n"
                 + "\t\t\t2️⃣ Second dose - " + str('{0:.2%}'.format(today['secondDose']/3909809)) + "\n"
@@ -321,7 +324,7 @@ def schedule_response(context: CallbackContext) -> None:
     for user in users_list:
         if user['subscribed'] == 'True':
             try:
-                context.bot.send_message(user['user'], parse_mode='Markdown', text=update_string)
+                context.bot.send_message(user['user'], parse_mode='HTML', text=update_string)
                 user_counter += 1
             except:
                 e = sys.exc_info()[0]
