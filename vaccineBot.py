@@ -276,8 +276,8 @@ def get_update_string(today, previous_day):
     l10 = "\n\n\t\t\t📈 Rolling 7 Day Doses - " + str('{:,}'.format(seven_day))
     l11 = "\n\t\t\t💉 Average Daily Doses - " + str('{:,}'.format(rolling_avg))
     l12 = "\n\n<b>👇 Commands</b>\n\n\t\t\t/daily - Subscribe for daily updates"
-    l13 = "\n\t\t\t/unsubscribe - Unsubscribe from updates"
-    l14 = "\n\t\t\t/start - See all commands"
+    l13 = "\n\n\t\t\t/unsubscribe - Unsubscribe from updates"
+    l14 = "\n\n\t\t\t/start - See all commands"
     l15 = "\n\nNote that first dose percentages also currently include the small number of J&J single dose vaccines delivered"
     update_string = l1 + l2 + l3 + l4 + l5 + jj + l6 + l7 + l8 + l9 + l10 + l11 + l12 + l13 + l14 + l15
     return update_string
@@ -307,8 +307,8 @@ def overall(update: Update, context: CallbackContext) -> None:
                 + "\n\t\t\t💉 Average Daily Doses - " + str('{:,}'.format(rolling_avg))
                 + "\n\n👇* Commands *"
                 + "\n\n\t\t\t/daily - Subscribe for daily updates"
-                + "\n\t\t\t/unsubscribe - Unsubscribe from updates"
-                + "\n\t\t\t/start - See all commands"
+                + "\n\n\t\t\t/unsubscribe - Unsubscribe from updates"
+                + "\n\n\t\t\t/start - See all commands"
                 + "\n\nNote that first dose percentages also currently include the small number of J&J single dose vaccines delivered"
     )
 
@@ -331,6 +331,10 @@ def supply(update: Update, context: CallbackContext) -> None:
                 + "\n\t\t\t🅰️ AstraZeneca - " + str('{:,}'.format(this_week['astraZeneca']-previous_week['astraZeneca']))
                 + "\n\t\t\tⓂ️ Moderna - " + str('{:,}'.format(this_week['moderna']-previous_week['moderna']))
                 + "\n\t\t\t🇯 J&J - " + str('{:,}'.format(this_week['jj']-previous_week['jj'])) + "\n\n"
+                + "\n\n👇* Commands *"
+                + "\n\n\t\t\t/latest - See latest stats on doses given"
+                + "\n\n\t\t\t/overall - See overall stats on doses given"
+                + "\n\n\t\t\t/start - See all commands"
 
     )
     update.message.reply_markdown(text)
