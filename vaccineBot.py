@@ -53,6 +53,7 @@ def start(update: Update, _: CallbackContext) -> None:
             "📅 /latest - Get the latest vaccination stats.\n\n"
             "🗓 /week - Get the stats for the last 7 days.\n\n"
             "📈 /overall - Overall rollout statistics.\n\n"
+            "📈 /supply - See the latest supply updates from the HSE.\n\n"
             "❎ /unsubscribe - Unsubscribe from daily updates.\n\n"
         )
 
