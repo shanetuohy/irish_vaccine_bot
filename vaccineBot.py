@@ -34,6 +34,7 @@ logger.info ("Admin ID = " + str(ADMIN_CONVERSATION_ID))
 DB = dataset.connect("sqlite:///covid.db")
 covid_table = DB['covid']
 users_table = DB['users']
+supply_table = DB['supply']
 last_update_table = DB['last_update']
 
 
@@ -85,6 +86,33 @@ def return_weekly_figure():
             return running_total, average_dose_per_day           
         except:
             today = today - datetime.timedelta(days=1)
+
+
+def get_latest_supply_from_db():
+
+    #Start scanning back from todays date
+    search_day = datetime.datetime.now()
+    #Supply stats are 7 days apart, so use days=7
+    previous_day = search_day - datetime.timedelta(days=7)
+    while 1:
+        try:
+            search_day_string = str(search_day.day) + "/" + "{:02d}".format(search_day.month) + "/" + str(search_day.year)
+            logger.debug("Searching for %s", search_day_string)
+            search_day_match = supply_table.find(date=search_day_string)
+            search_day_data = search_day_match.next()
+
+            # If we get here, it means we found a match.
+            previous_day_string = str(previous_day.day) + "/" + "{:02d}".format(previous_day.month) + "/" + str(
+                previous_day.year)
+            previous_day_match = supply_table.find(date=previous_day_string)
+            previous_day_data = previous_day_match.next()
+
+            break
+        except:
+            search_day = search_day - datetime.timedelta(days=1)
+            previous_day = previous_day - datetime.timedelta(days=1)
+    
+    return (search_day_data, previous_day_data)
 
 def get_latest_stats_from_db():
 
@@ -285,6 +313,27 @@ def overall(update: Update, context: CallbackContext) -> None:
 
     update.message.reply_markdown(text)
 
+def supply(update: Update, context: CallbackContext) -> None: 
+    this_week, previous_week = get_latest_supply_from_db()
+
+    text =  \
+    (
+                "📊*Overall supply as of " + this_week['date'] + "*\n\n"
+                + "\t\t\t🔢 Overall Total - " + str('{:,}'.format(this_week['total']))
+                + "\n\n\t\t\t🅿️ Pfizer - " + str('{:,}'.format(this_week['pfizer']))
+                + "\n\t\t\t🅰️ AstraZeneca - " + str('{:,}'.format(this_week['astraZeneca']))
+                + "\n\t\t\tⓂ️ Moderna - " + str('{:,}'.format(this_week['moderna']))
+                + "\n\t\t\t🇯 J&J - " + str('{:,}'.format(this_week['jj'])) + "\n\n"
+                + "📊*Latest weeks deliveries " + previous_week['date'] + " - " + this_week['date'] + "*\n\n"
+                + "\t\t\t🔢 Overall Total - " + str('{:,}'.format(this_week['total']- previous_week['total'] ))
+                + "\n\n\t\t\t🅿️ Pfizer - " + str('{:,}'.format(this_week['pfizer']-previous_week['pfizer']))
+                + "\n\t\t\t🅰️ AstraZeneca - " + str('{:,}'.format(this_week['astraZeneca']-previous_week['astraZeneca']))
+                + "\n\t\t\tⓂ️ Moderna - " + str('{:,}'.format(this_week['moderna']-previous_week['moderna']))
+                + "\n\t\t\t🇯 J&J - " + str('{:,}'.format(this_week['jj']-previous_week['jj'])) + "\n\n"
+
+    )
+    update.message.reply_markdown(text)
+    
 
 def test_update(update: Update, context: CallbackContext) -> None:
     today, previous_day = get_latest_stats_from_db()
@@ -358,6 +407,8 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler("broadcast", broadcast))
     dispatcher.add_handler(CommandHandler("users", users))
     dispatcher.add_handler(CommandHandler("test_update", test_update))
+    dispatcher.add_handler(CommandHandler("supply", supply))
+    
 
 
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, log_text))
