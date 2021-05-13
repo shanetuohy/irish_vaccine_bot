@@ -15,6 +15,8 @@ A live version of this bot is running at https://t.me/irish_vaccine_bot, try it 
 
 /overall - Gives some overall stats about the rollout
 
+/supply - Report details about the latest supply. 
+
 /latest - Queries the db for the most recent data
 
 /unsubscribe - Sets subscribed to false against the users coversation id
