@@ -1,3 +1,4 @@
+
 """
 Irish Vaccine Bot
 
@@ -9,7 +10,7 @@ Modify the config.cfg file to add configuration information.
 
 updateDB.py should be runninng to periodically query the HSE APIs for figure updates. 
 """
-import logging, dataset, datetime, configparser, sys
+import logging, dataset, datetime, configparser, sys, time
 from collections import OrderedDict
 from telegram import Update, ForceReply, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, CallbackQueryHandler, PicklePersistence
@@ -29,7 +30,9 @@ ADMIN_CONVERSATION_ID = config['Credentials'].get('admin_conversation_id')
 logger = logging.getLogger(__name__)
 logger.info("Starting bot.")
 logger.info ("Admin ID = " + str(ADMIN_CONVERSATION_ID))
-
+logger.info("Started bot." + str(TELEGRAM_TOKEN))
+logger.info("Bot ready")
+            
 
 DB = dataset.connect("sqlite:///covid.db")
 covid_table = DB['covid']
@@ -72,6 +75,7 @@ def return_daily_figure(date_object):
 
 def return_weekly_figure():
     """ Get the previous 7 days doses """
+    return 0, 0
     today = datetime.datetime.now()
 
     while 1:
@@ -116,14 +120,14 @@ def get_latest_supply_from_db():
     return (search_day_data, previous_day_data)
 
 def get_latest_stats_from_db():
-
     #Start scanning back from todays date
     search_day = datetime.datetime.now()
+    logger.info("Search day %s", search_day)
     previous_day = search_day - datetime.timedelta(days=1)
     while 1:
         try:
             search_day_string = str(search_day.day) + "/" + "{:02d}".format(search_day.month) + "/" + str(search_day.year)
-            logger.debug("Searching for %s", search_day_string)
+            logger.info("Searching for %s", search_day_string)
             search_day_match = covid_table.find(date=search_day_string)
             search_day_data = search_day_match.next()
 
@@ -135,9 +139,11 @@ def get_latest_stats_from_db():
 
             break
         except:
+            e = sys.exc_info()[0]
+            logger.info(str(e))
             search_day = search_day - datetime.timedelta(days=1)
             previous_day = search_day - datetime.timedelta(days=1)
-    
+            
     return (search_day_data, previous_day_data)
 
 def get_day_of_week_string(date_string):
@@ -248,7 +254,8 @@ def week(update: Update, _: CallbackContext) -> None:
         (
             "\n📅 *Rolling 7 Day Stats*\n" 
             + "\n\t\t\t📈 Rolling 7 Day Doses - " + str('{:,}'.format(running_total))
-            + "\n\t\t\t💉 Average Daily Doses - " + str('{:,}'.format(average_dose_per_day))    
+            + "\n\t\t\t💉 Average Daily Doses - " + str('{:,}'.format(average_dose_per_day))  
+            + "\n\t\t\t Currently weekly totals are incomplete."  
         )
     update.message.reply_markdown(text)
     logging.info("Getting week update for " + str(update.message.chat_id))
@@ -270,15 +277,15 @@ def get_update_string(today, previous_day):
     l5 = "\n\t\t\tⓂ️ Moderna - " + str('{:,}'.format(moderna))
     jj = "\n\t\t\t🇯 J&J - " + str('{:,}'.format(johnson))
     l6 = "\n\n<b>🧑 16+ population vaccinated</b>\n"
-    l7 = "\n\t\t\t1️⃣ First dose - " + str('{0:.2%}'.format(today['firstDose']/3909809))
-    l8 = "\n\t\t\t2️⃣ Second dose - " + str('{0:.2%}'.format(today['secondDose']/3909809))
+    l7 = "\n\t\t\t🌓 First dose - " + str('{0:.2%}'.format(today['firstDose']/3909809))
+    l8 = "\n\t\t\t🌝 Fully vaccinated - " + str('{0:.2%}'.format(today['secondDose']/3909809))
     l9 = "\n\n<b>📅 Rolling 7 Day Stats</b>"
     l10 = "\n\n\t\t\t📈 Rolling 7 Day Doses - " + str('{:,}'.format(seven_day))
     l11 = "\n\t\t\t💉 Average Daily Doses - " + str('{:,}'.format(rolling_avg))
     l12 = "\n\n<b>👇 Commands</b>\n\n\t\t\t/daily - Subscribe for daily updates"
     l13 = "\n\n\t\t\t/unsubscribe - Unsubscribe from updates"
     l14 = "\n\n\t\t\t/start - See all commands"
-    l15 = "\n\nNote that first dose percentages also currently include the small number of J&J single dose vaccines delivered"
+    l15 = "\n\nWeekly totals are currently incomplete."
     update_string = l1 + l2 + l3 + l4 + l5 + jj + l6 + l7 + l8 + l9 + l10 + l11 + l12 + l13 + l14 + l15
     return update_string
 
@@ -300,8 +307,8 @@ def overall(update: Update, context: CallbackContext) -> None:
                 + "\n\t\t\tⓂ️ Moderna - " + str('{:,}'.format(today['moderna']))
                 + "\n\t\t\t🇯 J&J - " + str('{:,}'.format(today['jj'])) + "\n\n"
                 + "*🧑 16+ population vaccinated*\n\n"
-                + "\t\t\t1️⃣ First dose - " + str('{0:.2%}'.format(today['firstDose']/3909809)) + "\n"
-                + "\t\t\t2️⃣ Second dose - " + str('{0:.2%}'.format(today['secondDose']/3909809)) + "\n"
+                + "\t\t\t🌓 First dose - " + str('{0:.2%}'.format(today['firstDose']/3909809)) + "\n"
+                + "\t\t\t🌝 Fully vaccinated - " + str('{0:.2%}'.format(today['secondDose']/3909809)) + "\n"
                 + "\n📅 *Rolling 7 Day Stats*\n" 
                 + "\n\t\t\t📈 Rolling 7 Day Doses - " + str('{:,}'.format(seven_day))
                 + "\n\t\t\t💉 Average Daily Doses - " + str('{:,}'.format(rolling_avg))
@@ -309,7 +316,7 @@ def overall(update: Update, context: CallbackContext) -> None:
                 + "\n\n\t\t\t/daily - Subscribe for daily updates"
                 + "\n\n\t\t\t/unsubscribe - Unsubscribe from updates"
                 + "\n\n\t\t\t/start - See all commands"
-                + "\n\nNote that first dose percentages also currently include the small number of J&J single dose vaccines delivered"
+                + "\n\nWeekly totals are currently incomplete."
     )
 
     update.message.reply_markdown(text)
