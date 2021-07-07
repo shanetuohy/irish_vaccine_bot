@@ -37,6 +37,7 @@ def check_rest_api():
     previous_day = returned_date - datetime.timedelta(days=1)
     previous_day_str = str(previous_day.day) + "/" + "{:02d}".format(previous_day.month) + "/" + str(previous_day.year)
 
+    print(previous_day_str)
     total_vac_yesterday = covid_table.find(date=previous_day_str).next()['totalVaccinations']
     pfizer_today = today['pf'] - covid_table.find(date=previous_day_str).next()['pfizer'] 
     moderna_today = today['modern'] - covid_table.find(date=previous_day_str).next()['moderna'] 
@@ -45,8 +46,8 @@ def check_rest_api():
     johnson_today =  (today['totalAdministered'] - total_vac_yesterday) - (pfizer_today + moderna_today + az_today) 
     johnson_total = johnson_today + covid_table.find(date=previous_day_str).next()['jj']
     today_dict = OrderedDict(date=returned_date_str,
-                             firstDose=today['firstDose'],
-                             secondDose=today['secondDose'],
+                             firstDose=today['firstDose'] - johnson_total,
+                             secondDose=today['secondDose'] + johnson_total,
                              totalVaccinations=today['totalAdministered'],
                              pfizer=today['pf'],
                              moderna=today['modern'],
