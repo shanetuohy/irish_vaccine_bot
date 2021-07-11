@@ -60,7 +60,7 @@ def start(update: Update, _: CallbackContext) -> None:
             "❎ /unsubscribe - Unsubscribe from daily updates.\n\n"
         )
 
-    logging.info("Start by " + str(update.message.chat_id))
+    logger.info("Start by " + str(update.message.chat_id))
 
 
 def help_command(update: Update, _: CallbackContext) -> None:
@@ -75,7 +75,6 @@ def return_daily_figure(date_object):
 
 def return_weekly_figure():
     """ Get the previous 7 days doses """
-    return 0, 0
     today = datetime.datetime.now()
 
     while 1:
@@ -127,7 +126,7 @@ def get_latest_stats_from_db():
     while 1:
         try:
             search_day_string = str(search_day.day) + "/" + "{:02d}".format(search_day.month) + "/" + str(search_day.year)
-            logger.info("Searching for %s", search_day_string)
+            logger.debug("Searching for %s", search_day_string)
             search_day_match = covid_table.find(date=search_day_string)
             search_day_data = search_day_match.next()
 
@@ -140,7 +139,7 @@ def get_latest_stats_from_db():
             break
         except:
             e = sys.exc_info()[0]
-            logger.info(str(e))
+            logger.debug(str(e))
             search_day = search_day - datetime.timedelta(days=1)
             previous_day = search_day - datetime.timedelta(days=1)
             
@@ -161,7 +160,7 @@ def today(update: Update, _: CallbackContext) -> None:
     
     """ Return the most recent vaccination numbers """
     
-    logging.info("Getting latest update for " + str(update.message.chat_id))
+    logger.info("Getting latest update for " + str(update.message.chat_id))
     
     # Get latest day from db
     today, previous_day = get_latest_stats_from_db()
@@ -178,7 +177,7 @@ def unset_response(update: Update, context: CallbackContext) -> None:
     context.bot_data.update({str(update.message.chat_id) : 'False'})
     user_data = OrderedDict(user=str(update.message.chat_id),subscribed='False')   
     users_table.upsert(user_data, ['user'])
-    logging.info("Unsubscribing user " + str(update.message.chat_id))
+    logger.info("Unsubscribing user " + str(update.message.chat_id))
     text = "No worries, you've been unsubscribed.\n\n" \
             "To subscribe to daily updates again, just press /daily"
     update.message.reply_text(text)
@@ -205,7 +204,7 @@ def set_respond(update: Update, context: CallbackContext) -> None:
 
         # Recreate the job. 
         context.job_queue.run_repeating(schedule_response, 200, context="Daily")
-        logging.info("Created updated job.")
+        logger.info("Created updated job.")
         text = "I'll message you every day, as soon as the vaccine stats update.\n\n" \
                 "To unsubscribe, just press /unsubscribe. \n\n" \
                 "To see the latest stats, press /latest."
@@ -255,10 +254,10 @@ def week(update: Update, _: CallbackContext) -> None:
             "\n📅 *Rolling 7 Day Stats*\n" 
             + "\n\t\t\t📈 Rolling 7 Day Doses - " + str('{:,}'.format(running_total))
             + "\n\t\t\t💉 Average Daily Doses - " + str('{:,}'.format(average_dose_per_day))  
-            + "\n\t\t\t Currently weekly totals are incomplete."  
+            + "\n\nNote that figures don't currently include doses administered by pharmacies."  
         )
     update.message.reply_markdown(text)
-    logging.info("Getting week update for " + str(update.message.chat_id))
+    logger.info("Getting week update for " + str(update.message.chat_id))
 
 def get_update_string(today, previous_day):   
     """ Get the string for daily updates """
@@ -285,7 +284,7 @@ def get_update_string(today, previous_day):
     l12 = "\n\n<b>👇 Commands</b>\n\n\t\t\t/daily - Subscribe for daily updates"
     l13 = "\n\n\t\t\t/unsubscribe - Unsubscribe from updates"
     l14 = "\n\n\t\t\t/start - See all commands"
-    l15 = "\n\nWeekly totals are currently incomplete."
+    l15 = "\n\nNote that figures don't currently include doses administered by pharmacies."
     update_string = l1 + l2 + l3 + l4 + l5 + jj + l6 + l7 + l8 + l9 + l10 + l11 + l12 + l13 + l14 + l15
     return update_string
 
@@ -296,7 +295,7 @@ def overall(update: Update, context: CallbackContext) -> None:
     today, _ = get_latest_stats_from_db()
     seven_day, rolling_avg = return_weekly_figure()
     
-    logging.info("Getting overall stats for " + str(update.message.chat_id))
+    logger.info("Getting overall stats for " + str(update.message.chat_id))
     
     text =  \
     (
@@ -368,16 +367,17 @@ def schedule_response(context: CallbackContext) -> None:
     
     # From DB get the date of our last update
     last_update = last_update_table.find_one(id=1)
-    
+    logger.debug("Last update - %s.", last_update)
     # Get the list of users
     users_list = users_table.all()
 
     if last_update['date'] == today['date']:
         #If the dates are the same, skip updating
+        logger.debug("Last update and todays date were the same - %s.", today)
         return None
 
     #If we get this far, dates were different, so let's send an update
-    logging.info("Dates were different, time for an update!")
+    logger.info("Dates were different, time for an update!")
 
     #Update the last updated date in the db
     last_update_data = OrderedDict(id=1,date=today['date'])
@@ -394,7 +394,7 @@ def schedule_response(context: CallbackContext) -> None:
                 e = sys.exc_info()[0]
                 logger.info(str(e))
                 logger.info("Got exception when sending update to " + user['user'])
-    logging.info("Sent update to " + str(user_counter) + " users")
+    logger.info("Sent update to " + str(user_counter) + " users")
     
 
 
