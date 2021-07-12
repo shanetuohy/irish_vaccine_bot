@@ -121,7 +121,7 @@ def get_latest_supply_from_db():
 def get_latest_stats_from_db():
     #Start scanning back from todays date
     search_day = datetime.datetime.now()
-    logger.info("Search day %s", search_day)
+    logger.debug("Search day %s", search_day)
     previous_day = search_day - datetime.timedelta(days=1)
     while 1:
         try:
@@ -233,13 +233,13 @@ def broadcast(update: Update, context: CallbackContext) -> None:
     
     if str(update.message.chat_id) == str(ADMIN_CONVERSATION_ID):
         update_string = update.message.text[11:]
-        logger.info("Admin did a broadcast")
+        logger.info("Admin did a broadcast of " + str(update_string))
         users_list = users_table.all()
         for user in users_list:
             if user['subscribed'] == "True":
                 try:
                     context.bot.send_message(user['user'], parse_mode='HTML', text=update_string)
-                    logger.info("Broadcasted message " + str(update_string) + " to user " + str(user['user']))
+                    logger.info("Broadcasted message to user " + str(user['user']))
                 except:
                     e = sys.exc_info()[0]
                     logger.info(str(e))
