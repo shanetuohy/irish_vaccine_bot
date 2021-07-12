@@ -315,7 +315,7 @@ def overall(update: Update, context: CallbackContext) -> None:
                 + "\n\n\t\t\t/daily - Subscribe for daily updates"
                 + "\n\n\t\t\t/unsubscribe - Unsubscribe from updates"
                 + "\n\n\t\t\t/start - See all commands"
-                + "\n\nWeekly totals are currently incomplete."
+                + "\n\nNote that figures don't currently include doses administered by pharmacies."
     )
 
     update.message.reply_markdown(text)
