@@ -254,7 +254,6 @@ def week(update: Update, _: CallbackContext) -> None:
             "\n📅 *Rolling 7 Day Stats*\n" 
             + "\n\t\t\t📈 Rolling 7 Day Doses - " + str('{:,}'.format(running_total))
             + "\n\t\t\t💉 Average Daily Doses - " + str('{:,}'.format(average_dose_per_day))  
-            + "\n\nNote that figures don't currently include doses administered by pharmacies."  
         )
     update.message.reply_markdown(text)
     logger.info("Getting week update for " + str(update.message.chat_id))
@@ -284,7 +283,7 @@ def get_update_string(today, previous_day):
     l12 = "\n\n<b>👇 Commands</b>\n\n\t\t\t/daily - Subscribe for daily updates"
     l13 = "\n\n\t\t\t/unsubscribe - Unsubscribe from updates"
     l14 = "\n\n\t\t\t/start - See all commands"
-    l15 = "\n\nNote that figures don't currently include doses administered by pharmacies."
+    l15 = "\n\nIf you have any feedback or suggestions, just send the bot a message and I'll get it."
     update_string = l1 + l2 + l3 + l4 + l5 + jj + l6 + l7 + l8 + l9 + l10 + l11 + l12 + l13 + l14 + l15
     return update_string
 
@@ -315,7 +314,6 @@ def overall(update: Update, context: CallbackContext) -> None:
                 + "\n\n\t\t\t/daily - Subscribe for daily updates"
                 + "\n\n\t\t\t/unsubscribe - Unsubscribe from updates"
                 + "\n\n\t\t\t/start - See all commands"
-                + "\n\nNote that figures don't currently include doses administered by pharmacies."
     )
 
     update.message.reply_markdown(text)
