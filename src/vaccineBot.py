@@ -268,24 +268,31 @@ def get_update_string(today, previous_day):
     seven_day, rolling_avg = return_weekly_figure()
     day_of_week = get_day_of_week_string(today['date'])
 
-    l1 = "<b>📊" + day_of_week + " " + str(today['date']) + "</b>\n"
-    l2 = "\n📈 Daily Total - " + str('{:,}'.format(today['dailyVaccinations']))
-    l3 = "\n\n\t\t\t🅿️ Pfizer - " + str('{:,}'.format(pfizer))
-    l4 = "\n\t\t\t🅰️ AstraZeneca - " + str('{:,}'.format(az))
-    l5 = "\n\t\t\tⓂ️ Moderna - " + str('{:,}'.format(moderna))
-    jj = "\n\t\t\t🇯 J&J - " + str('{:,}'.format(johnson))
-    l6 = "\n\n<b>🧑 16+ population vaccinated</b>\n"
-    l7 = "\n\t\t\t🌓 First dose - " + str('{0:.2%}'.format(today['firstDose']/3909809))
-    l8 = "\n\t\t\t🌝 Fully vaccinated - " + str('{0:.2%}'.format(today['secondDose']/3909809))
-    l9 = "\n\n<b>📅 Rolling 7 Day Stats</b>"
-    l10 = "\n\n\t\t\t📈 Rolling 7 Day Doses - " + str('{:,}'.format(seven_day))
-    l11 = "\n\t\t\t💉 Average Daily Doses - " + str('{:,}'.format(rolling_avg))
-    l12 = "\n\n<b>👇 Commands</b>\n\n\t\t\t/daily - Subscribe for daily updates"
-    l13 = "\n\n\t\t\t/unsubscribe - Unsubscribe from updates"
-    l14 = "\n\n\t\t\t/start - See all commands"
-    l15 = "\n\nIf you have any feedback or suggestions, just send the bot a message and I'll get it."
-    update_string = l1 + l2 + l3 + l4 + l5 + jj + l6 + l7 + l8 + l9 + l10 + l11 + l12 + l13 + l14 + l15
-    return update_string
+    text =  \
+        (
+            "<b>📊" + day_of_week + " " + str(today['date']) + "</b>\n"
+            +"\n📈 Daily Total : " + str('{:,}'.format(today['dailyVaccinations']))
+            +"\n\n\t\t\t1️⃣ First dose (of a two dose vaccine) : +" + str('{:,}'.format(today['firstDose']-previous_day['firstDose']))
+            +"\n\t\t\t🏁 Fully Vaccinated : +" + str('{:,}'.format(today['secondDose']-previous_day['secondDose']))
+            +"\n\n\t\t\t🅿️ Pfizer : " + str('{:,}'.format(pfizer))
+            +"\n\t\t\t🅰️ AstraZeneca : " + str('{:,}'.format(az))
+            +"\n\t\t\tⓂ️ Moderna : " + str('{:,}'.format(moderna))
+            +"\n\t\t\t🇯 J&J : " + str('{:,}'.format(johnson))
+            +"\n\n<b>🧑 Total population vaccinated</b>\n"
+            +"\n\t\t\t🌓 First dose (of a two dose vaccine) - " + str('{0:.2%}'.format(today['firstDose']/4977400))
+            +"\n\t\t\t🌝 Fully vaccinated - " + str('{0:.2%}'.format(today['secondDose']/4977400))
+            +"\n\n<b>🧑 12+ population vaccinated</b>\n"
+            +"\n\t\t\t🌓 First dose (of a two dose vaccine) - " + str('{0:.2%}'.format(today['firstDose']/4183700))
+            +"\n\t\t\t🌝 Fully vaccinated - " + str('{0:.2%}'.format(today['secondDose']/4183700))
+            +"\n\n<b>📅 Rolling 7 Day Stats</b>"
+            +"\n\n\t\t\t📈 Rolling 7 Day Doses - " + str('{:,}'.format(seven_day))
+            +"\n\t\t\t💉 Average Daily Doses - " + str('{:,}'.format(rolling_avg))
+            +"\n\n<b>👇 Commands</b>\n\n\t\t\t/daily - Subscribe for daily updates"
+            +"\n\n\t\t\t/unsubscribe - Unsubscribe from updates"
+            +"\n\n\t\t\t/start - See all commands"
+            +"\n\nIf you have any feedback or suggestions, just send the bot a message and I'll get it."
+            )
+    return text
 
 
 def overall(update: Update, context: CallbackContext) -> None:
@@ -300,13 +307,16 @@ def overall(update: Update, context: CallbackContext) -> None:
     (
                 "📊*Overall stats as of " + today['date'] + "*\n\n"
                 + "\t\t\t🔢 Overall Total - " + str('{:,}'.format(today['totalVaccinations']))
-                + "\n\n\t\t\t🅿️ Pfizer - " + str('{:,}'.format(today['pfizer']))
-                + "\n\t\t\t🅰️ AstraZeneca - " + str('{:,}'.format(today['astraZeneca']))
-                + "\n\t\t\tⓂ️ Moderna - " + str('{:,}'.format(today['moderna']))
+                + "\n\n\t\t\t🅿️ Pfizer : " + str('{:,}'.format(today['pfizer']))
+                + "\n\t\t\t🅰️ AstraZeneca : " + str('{:,}'.format(today['astraZeneca']))
+                + "\n\t\t\tⓂ️ Moderna : " + str('{:,}'.format(today['moderna']))
                 + "\n\t\t\t🇯 J&J - " + str('{:,}'.format(today['jj'])) + "\n\n"
-                + "*🧑 16+ population vaccinated*\n\n"
-                + "\t\t\t🌓 First dose - " + str('{0:.2%}'.format(today['firstDose']/3909809)) + "\n"
-                + "\t\t\t🌝 Fully vaccinated - " + str('{0:.2%}'.format(today['secondDose']/3909809)) + "\n"
+                + "*🧑 Total population vaccinated*\n\n"
+                + "\t\t\t🌓 First dose (of a two dose vaccine) - " + str('{0:.2%}'.format(today['firstDose']/4977400)) + "\n"
+                + "\t\t\t🌝 Fully vaccinated - " + str('{0:.2%}'.format(today['secondDose']/4977400)) + "\n"
+                +"\n\n*🧑 12+ population vaccinated*\n"
+                +"\n\t\t\t🌓 First dose (of a two dose vaccine) - " + str('{0:.2%}'.format(today['firstDose']/4183700))
+                +"\n\t\t\t🌝 Fully vaccinated - " + str('{0:.2%}'.format(today['secondDose']/4183700)) + "\n"
                 + "\n📅 *Rolling 7 Day Stats*\n" 
                 + "\n\t\t\t📈 Rolling 7 Day Doses - " + str('{:,}'.format(seven_day))
                 + "\n\t\t\t💉 Average Daily Doses - " + str('{:,}'.format(rolling_avg))
