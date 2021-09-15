@@ -280,9 +280,11 @@ def get_update_string(today, previous_day):
             +"\n\t\t\t🇯 J&J : " + str('{:,}'.format(johnson))
             +"\n\n<b>🧑 Total population vaccinated</b>\n"
             +"\n\t\t\t🌓 First dose (of a two dose vaccine) - " + str('{0:.2%}'.format(today['firstDose']/4977400))
+            +"\n\t\t\t🌓 Single dose vaccine - " + str('{0:.2%}'.format(today['jj']/4977400))
             +"\n\t\t\t🌝 Fully vaccinated - " + str('{0:.2%}'.format(today['secondDose']/4977400))
             +"\n\n<b>🧑 12+ population vaccinated</b>\n"
             +"\n\t\t\t🌓 First dose (of a two dose vaccine) - " + str('{0:.2%}'.format(today['firstDose']/4183700))
+            +"\n\t\t\t🌓 Single dose vaccine - " + str('{0:.2%}'.format(today['jj']/4183700))
             +"\n\t\t\t🌝 Fully vaccinated - " + str('{0:.2%}'.format(today['secondDose']/4183700))
             +"\n\n<b>📅 Rolling 7 Day Stats</b>"
             +"\n\n\t\t\t📈 Rolling 7 Day Doses - " + str('{:,}'.format(seven_day))
@@ -313,9 +315,11 @@ def overall(update: Update, context: CallbackContext) -> None:
                 + "\n\t\t\t🇯 J&J - " + str('{:,}'.format(today['jj'])) + "\n\n"
                 + "*🧑 Total population vaccinated*\n\n"
                 + "\t\t\t🌓 First dose (of a two dose vaccine) - " + str('{0:.2%}'.format(today['firstDose']/4977400)) + "\n"
+                + "\t\t\t🌓 Single dose vaccine - " + str('{0:.2%}'.format(today['jj']/4977400)) + "\n"
                 + "\t\t\t🌝 Fully vaccinated - " + str('{0:.2%}'.format(today['secondDose']/4977400)) + "\n"
                 +"\n\n*🧑 12+ population vaccinated*\n"
                 +"\n\t\t\t🌓 First dose (of a two dose vaccine) - " + str('{0:.2%}'.format(today['firstDose']/4183700))
+                +"\n\t\t\t🌓 Single dose vaccine - " + str('{0:.2%}'.format(today['jj']/4183700))
                 +"\n\t\t\t🌝 Fully vaccinated - " + str('{0:.2%}'.format(today['secondDose']/4183700)) + "\n"
                 + "\n📅 *Rolling 7 Day Stats*\n" 
                 + "\n\t\t\t📈 Rolling 7 Day Doses - " + str('{:,}'.format(seven_day))
